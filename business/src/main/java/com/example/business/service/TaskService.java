@@ -107,12 +107,13 @@ public class TaskService {
 
     public Task addUserToTask(Long taskId, Long userId) {
         Task taskById = getTaskById(taskId);
-        User userById = userService.getUserById(userId);
+        User userById = userService.findUserById(userId);
 
         if (!taskById.getAssignedUsers().contains(userById)) {
             taskById.getAssignedUsers().add(userById);
         }
-        return taskRepository.save(taskById);
+        taskRepository.save(taskById);
+        return taskById;
     }
 
     public void deleteTask(Long id) {

@@ -1,15 +1,18 @@
 package com.example.business.service;
 
+import com.example.business.dto.UserDto;
 import com.example.business.exceptions.EmailAlreadyExistsException;
 import com.example.business.exceptions.FilteredUsersNotFoundException;
 import com.example.business.exceptions.MissingEmailException;
 import com.example.business.exceptions.UserNotFoundException;
+import com.example.business.mappers.UserMapper;
 import com.example.domain.entity.User;
 import com.example.domain.repository.UserRepository;
 import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -17,6 +20,7 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     public List<User> getFilteredUsers(String firstName, String lastName, String email) {
         List<User> usersByFilters = userRepository.findByFilters(firstName, lastName, email);
@@ -26,22 +30,29 @@ public class UserService {
         return usersByFilters;
     }
 
-    public User getUserById(Long id) {
+    public UserDto getUserById(Long id) {
+        User user = findUserById(id);
+        return userMapper.mapToUserDto(user);
+    }
+
+    public User findUserById(Long id) {
         return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
     }
 
-    public User addUser(User user) {
-        if (StringUtils.isEmpty(user.getEmail())) {
+    public UserDto addUser(UserDto userDto) {
+        if (StringUtils.isEmpty(userDto.getEmail())) {
             throw new MissingEmailException();
         }
-        checkDoesEmailExistInDB(user.getEmail());
-        return userRepository.save(user);
+        checkDoesEmailExistInDB(userDto.getEmail());
+        userRepository.save(userMapper.mapToUser(userDto));
+        return userDto;
     }
 
-    public User updateUser(Long id, User userDto) {
-        User existingUser = getUserById(id);
+    public UserDto updateUser(Long id, UserDto userDto) {
+        User existingUser = findUserById(id);
         User updatedUser = getUpdatedUser(userDto, existingUser);
-        return userRepository.save(updatedUser);
+        userRepository.save(updatedUser);
+        return userDto;
     }
 
 
@@ -49,7 +60,7 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    private User getUpdatedUser(User userDto, User existingUser) {
+    private User getUpdatedUser(UserDto userDto, User existingUser) {
         if (userDto.getEmail() != null && !userDto.getEmail().equals(existingUser.getEmail())) {
             checkDoesEmailExistInDB(userDto.getEmail());
             existingUser.setEmail(userDto.getEmail());
