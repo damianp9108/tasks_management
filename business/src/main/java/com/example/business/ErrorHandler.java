@@ -50,4 +50,10 @@ public class ErrorHandler {
     public String filteredTasksNotFoundErrorHandler(FilteredTasksNotFoundException exception) {
         return exception.getMessage();
     }
+
+    @ExceptionHandler(MissingEmailException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public String missingEmailErrorHandler(MissingEmailException exception) {
+        return exception.getMessage();
+    }
 }

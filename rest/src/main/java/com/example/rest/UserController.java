@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -18,18 +17,16 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public List<User> getFilteredUsers(
+    public ResponseEntity<List<User>> getFilteredUsers(
             @RequestParam(required = false) String firstName,
             @RequestParam(required = false) String lastName,
             @RequestParam(required = false) String email) {
-        return userService.getFilteredUsers(firstName, lastName, email);
+        return ResponseEntity.ok(userService.getFilteredUsers(firstName, lastName, email));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        return userService.getUserById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(userService.getUserById(id));
     }
 
     @PostMapping
@@ -39,13 +36,7 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDto) {
-        Optional<User> userById = userService.getUserById(id);
-        if (userById.isPresent()) {
-            User savedUser = userService.updateUser(userDto, userById.get());
-            return ResponseEntity.ok(savedUser);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(userService.updateUser(id, userDto));
     }
 
     @DeleteMapping("/{id}")

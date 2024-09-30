@@ -1,9 +1,7 @@
 package com.example.business.service;
 
 import com.example.business.dto.TaskDTO;
-import com.example.business.exceptions.TaskNotFoundException;
-import com.example.business.exceptions.UserNotFoundException;
-import com.example.business.exceptions.UsersNotFoundException;
+import com.example.business.exceptions.*;
 import com.example.domain.entity.Task;
 import com.example.domain.entity.TaskStatus;
 import com.example.domain.entity.User;
@@ -26,11 +24,15 @@ public class TaskService {
     private final TaskRepository taskRepository;
 
     public List<Task> getTasksWithFilters(TaskStatus status, String title, LocalDate dueDate) {
-        return taskRepository.findByFilters(status, title, dueDate);
+        List<Task> tasksByFilters = taskRepository.findByFilters(status, title, dueDate);
+        if (tasksByFilters.isEmpty()) {
+            throw new FilteredTasksNotFoundException();
+        }
+        return tasksByFilters;
     }
 
-    public Optional<Task> getTaskById(Long id) {
-        return taskRepository.findById(id);
+    public Task getTaskById(Long id) {
+        return taskRepository.findById(id).orElseThrow(() -> new TaskNotFoundException(id));
     }
 
     public Task createTask(TaskDTO taskDTO) {
@@ -40,7 +42,7 @@ public class TaskService {
         Task newTask = new Task();
         newTask.setTitle(taskDTO.getTitle());
         newTask.setDescription(taskDTO.getDescription());
-        newTask.setStatus(TaskStatus.valueOf(taskDTO.getStatus()));
+        newTask.setStatus(getTaskStatus(taskDTO.getStatus()));
         newTask.setDueDate(taskDTO.getDueDate());
         newTask.setAssignedUsers(assignedUsers);
 
@@ -82,7 +84,7 @@ public class TaskService {
             existingTask.setDescription(taskDTO.getDescription());
         }
         if (taskDTO.getStatus() != null) {
-            existingTask.setStatus(TaskStatus.valueOf(taskDTO.getStatus()));
+            existingTask.setStatus(getTaskStatus(taskDTO.getStatus()));
         }
         if (taskDTO.getDueDate() != null) {
             existingTask.setDueDate(taskDTO.getDueDate());
@@ -98,31 +100,32 @@ public class TaskService {
     }
 
     public Task updateTaskStatus(Long id, String status) {
-        Optional<Task> taskById = taskRepository.findById(id);
-
-        if (taskById.isPresent()) {
-            Task task = taskById.get();
-            task.setStatus(TaskStatus.valueOf(status));
-            return taskRepository.save(task);
-        } else {
-            throw new IllegalArgumentException("Zadanie o podanym ID nie istnieje");
-        }
+        Task taskById = getTaskById(id);
+        taskById.setStatus(getTaskStatus(status));
+        return taskRepository.save(taskById);
     }
 
     public Task addUserToTask(Long taskId, Long userId) {
-        Task taskById = taskRepository.findById(taskId).orElseThrow(() -> new TaskNotFoundException(taskId));
-        User userById = userService.getUserById(userId).orElseThrow(() -> new UserNotFoundException(userId));
+        Task taskById = getTaskById(taskId);
+        User userById = userService.getUserById(userId);
 
         if (!taskById.getAssignedUsers().contains(userById)) {
             taskById.getAssignedUsers().add(userById);
         }
-
         return taskRepository.save(taskById);
-
     }
 
     public void deleteTask(Long id) {
         taskRepository.deleteById(id);
+    }
+
+    public TaskStatus getTaskStatus(String status) {
+        for (TaskStatus taskStatus : TaskStatus.values()) {
+            if (taskStatus.name().equalsIgnoreCase(status)) {
+                return taskStatus;
+            }
+        }
+        throw new IllegalStatusException(status);
     }
 }
 
