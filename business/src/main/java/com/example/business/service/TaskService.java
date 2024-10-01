@@ -32,7 +32,12 @@ public class TaskService {
         return taskMapper.mapToTaskDTOs(tasksByFilters);
     }
 
-    public Task getTaskById(Long id) {
+    public TaskDTO getTaskById(Long id) {
+        Task task = findTaskById(id);
+        return taskMapper.mapToTaskDTO(task);
+    }
+
+    private Task findTaskById(Long id) {
         return taskRepository.findById(id).orElseThrow(() -> new TaskNotFoundException(id));
     }
 
@@ -95,14 +100,14 @@ public class TaskService {
     }
 
     public TaskDTO updateTaskStatus(Long id, String status) {
-        Task taskById = getTaskById(id);
+        Task taskById = findTaskById(id);
         taskById.setStatus(taskMapper.getTaskStatus(status));
         taskRepository.save(taskById);
         return taskMapper.mapToTaskDTO(taskById);
     }
 
     public TaskDTO addUserToTask(Long taskId, Long userId) {
-        Task taskById = getTaskById(taskId);
+        Task taskById = findTaskById(taskId);
         User userById = userService.findUserById(userId);
 
         if (!taskById.getAssignedUsers().contains(userById)) {
