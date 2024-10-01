@@ -40,17 +40,17 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> updateTask(@PathVariable Long id, @RequestBody TaskDTO taskDTO) {
+    public ResponseEntity<TaskDTO> updateTask(@PathVariable Long id, @RequestBody TaskDTO taskDTO) {
         return ResponseEntity.ok(taskService.updateTask(id, taskDTO));
     }
 
     @PutMapping("/{id}/{status}")
-    public ResponseEntity<Task> updateTaskStatus(@PathVariable Long id, @PathVariable String status) {
+    public ResponseEntity<TaskDTO> updateTaskStatus(@PathVariable Long id, @PathVariable String status) {
         return ResponseEntity.ok(taskService.updateTaskStatus(id, status));
     }
 
     @PatchMapping("/{id}/{userId}")
-    public ResponseEntity<Task> addUserToTask(@PathVariable Long id, @PathVariable Long userId) {
+    public ResponseEntity<TaskDTO> addUserToTask(@PathVariable Long id, @PathVariable Long userId) {
         return ResponseEntity.ok(taskService.addUserToTask(id, userId));
     }
 

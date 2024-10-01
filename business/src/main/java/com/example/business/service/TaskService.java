@@ -65,7 +65,7 @@ public class TaskService {
                 .toList();
     }
 
-    public Task updateTask(Long id, TaskDTO taskDTO) {
+    public TaskDTO updateTask(Long id, TaskDTO taskDTO) {
         Task existingTask = taskRepository.findById(id).orElseThrow(() -> new TaskNotFoundException(id));
         List<User> assignedUsers = existingTask.getAssignedUsers();
 
@@ -89,17 +89,19 @@ public class TaskService {
                     .forEach(assignedUsers::add);
         }
 
-        return taskRepository.save(existingTask);
+        taskRepository.save(existingTask);
+        return taskMapper.mapToTaskDTO(existingTask);
 
     }
 
-    public Task updateTaskStatus(Long id, String status) {
+    public TaskDTO updateTaskStatus(Long id, String status) {
         Task taskById = getTaskById(id);
         taskById.setStatus(taskMapper.getTaskStatus(status));
-        return taskRepository.save(taskById);
+        taskRepository.save(taskById);
+        return taskMapper.mapToTaskDTO(taskById);
     }
 
-    public Task addUserToTask(Long taskId, Long userId) {
+    public TaskDTO addUserToTask(Long taskId, Long userId) {
         Task taskById = getTaskById(taskId);
         User userById = userService.findUserById(userId);
 
@@ -107,7 +109,7 @@ public class TaskService {
             taskById.getAssignedUsers().add(userById);
         }
         taskRepository.save(taskById);
-        return taskById;
+        return taskMapper.mapToTaskDTO(taskById);
     }
 
     public void deleteTask(Long id) {
