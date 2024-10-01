@@ -1,12 +1,14 @@
 package com.example.domain.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Data
+@Builder
 @Entity
 public class Task {
     @Id

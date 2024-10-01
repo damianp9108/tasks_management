@@ -2,6 +2,7 @@ package com.example.business.service;
 
 import com.example.business.dto.TaskDTO;
 import com.example.business.exceptions.*;
+import com.example.business.mappers.TaskMapper;
 import com.example.domain.entity.Task;
 import com.example.domain.entity.TaskStatus;
 import com.example.domain.entity.User;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,31 +22,25 @@ public class TaskService {
 
     private final UserService userService;
     private final TaskRepository taskRepository;
+    private final TaskMapper taskMapper;
 
-    public List<Task> getTasksWithFilters(TaskStatus status, String title, LocalDate dueDate) {
+    public List<TaskDTO> getFilteredTasks(TaskStatus status, String title, LocalDate dueDate) {
         List<Task> tasksByFilters = taskRepository.findByFilters(status, title, dueDate);
         if (tasksByFilters.isEmpty()) {
             throw new FilteredTasksNotFoundException();
         }
-        return tasksByFilters;
+        return taskMapper.mapToTaskDTOs(tasksByFilters);
     }
 
     public Task getTaskById(Long id) {
         return taskRepository.findById(id).orElseThrow(() -> new TaskNotFoundException(id));
     }
 
-    public Task createTask(TaskDTO taskDTO) {
-
+    public TaskDTO createTask(TaskDTO taskDTO) {
         List<User> assignedUsers = getUsersToAssign(taskDTO);
-
-        Task newTask = new Task();
-        newTask.setTitle(taskDTO.getTitle());
-        newTask.setDescription(taskDTO.getDescription());
-        newTask.setStatus(getTaskStatus(taskDTO.getStatus()));
-        newTask.setDueDate(taskDTO.getDueDate());
-        newTask.setAssignedUsers(assignedUsers);
-
-        return taskRepository.save(newTask);
+        Task newTask = taskMapper.mapToTask(taskDTO, assignedUsers);
+        taskRepository.save(newTask);
+        return taskDTO;
     }
 
     private List<User> getUsersToAssign(TaskDTO taskDTO) {
@@ -84,7 +78,7 @@ public class TaskService {
             existingTask.setDescription(taskDTO.getDescription());
         }
         if (taskDTO.getStatus() != null) {
-            existingTask.setStatus(getTaskStatus(taskDTO.getStatus()));
+            existingTask.setStatus(taskMapper.getTaskStatus(taskDTO.getStatus()));
         }
         if (taskDTO.getDueDate() != null) {
             existingTask.setDueDate(taskDTO.getDueDate());
@@ -101,7 +95,7 @@ public class TaskService {
 
     public Task updateTaskStatus(Long id, String status) {
         Task taskById = getTaskById(id);
-        taskById.setStatus(getTaskStatus(status));
+        taskById.setStatus(taskMapper.getTaskStatus(status));
         return taskRepository.save(taskById);
     }
 
@@ -118,15 +112,6 @@ public class TaskService {
 
     public void deleteTask(Long id) {
         taskRepository.deleteById(id);
-    }
-
-    public TaskStatus getTaskStatus(String status) {
-        for (TaskStatus taskStatus : TaskStatus.values()) {
-            if (taskStatus.name().equalsIgnoreCase(status)) {
-                return taskStatus;
-            }
-        }
-        throw new IllegalStatusException(status);
     }
 }
 

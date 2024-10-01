@@ -20,11 +20,11 @@ public class TaskController {
     private final TaskService taskService;
 
     @GetMapping
-    public ResponseEntity<List<Task>> getAllTasks(
+    public ResponseEntity<List<TaskDTO>> getFilteredTasks(
             @RequestParam(required = false) TaskStatus status,
             @RequestParam(required = false) String title,
             @RequestParam(required = false) LocalDate dueDate) {
-        return ResponseEntity.ok(taskService.getTasksWithFilters(status, title, dueDate));
+        return ResponseEntity.ok(taskService.getFilteredTasks(status, title, dueDate));
     }
 
     @GetMapping("/{id}")
@@ -34,7 +34,7 @@ public class TaskController {
     }
 
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody TaskDTO taskDTO) {
+    public ResponseEntity<TaskDTO> createTask(@RequestBody TaskDTO taskDTO) {
         return new ResponseEntity<>(taskService.createTask(taskDTO), HttpStatus.CREATED);
 
     }
@@ -44,7 +44,6 @@ public class TaskController {
         return ResponseEntity.ok(taskService.updateTask(id, taskDTO));
     }
 
-    // Endpoint do zmiany statusu zadania
     @PutMapping("/{id}/{status}")
     public ResponseEntity<Task> updateTaskStatus(@PathVariable Long id, @PathVariable String status) {
         return ResponseEntity.ok(taskService.updateTaskStatus(id, status));
